@@ -10,3 +10,7 @@ from auth.users u join (values
   ('conserje@demo.cl', 'conserje', null, 'Héctor Salazar Muñoz')
 ) as x(email, rol, unidad, nombre) on u.email = x.email
 on conflict (user_id, condominio_id) do nothing;
+
+-- Vincula al conserje de demostración con su ficha de trabajador, para que pueda abrir turno.
+update trabajadores set user_id = (select id from auth.users where email = 'conserje@demo.cl')
+where nombre = 'Héctor Salazar Muñoz' and condominio_id = '00000000-0000-0000-0000-000000000001';
