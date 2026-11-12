@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Rol } from "@/lib/permisos";
@@ -11,8 +12,14 @@ export type PerfilActual = {
   email: string | null;
 };
 
-/** Perfil (rol + unidad + condominio) de la persona autenticada. Redirige a /acceso si no hay sesión o perfil. */
-export async function getPerfilActual(): Promise<PerfilActual> {
+/**
+ * Perfil (rol + unidad + condominio) de la persona autenticada. Redirige a /acceso
+ * si no hay sesión o perfil. Envuelto en cache() de React: el layout y cada página
+ * llaman a esto por separado, y sin memoizar cada clic en el menú disparaba el doble
+ * de consultas (auth + perfiles) de las necesarias — cache() las deduplica dentro
+ * de la misma solicitud.
+ */
+export const getPerfilActual = cache(async (): Promise<PerfilActual> => {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/acceso");
@@ -33,4 +40,4 @@ export async function getPerfilActual(): Promise<PerfilActual> {
     nombre: perfil.nombre,
     email: auth.user.email ?? null,
   };
-}
+});
