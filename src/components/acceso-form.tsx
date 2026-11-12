@@ -20,7 +20,7 @@ const NOTA_POR_ROL: Record<Rol, string> = {
   conserje: "Abre turno, registra accesos, visitas, vehículos y encomiendas.",
 };
 
-export function AccesoForm() {
+export function AccesoForm({ unidades, m2 }: { unidades: number; m2: number }) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -192,16 +192,6 @@ export function AccesoForm() {
                 <span>{verificando ? "Verificando…" : "Ingresar"}</span>
                 {!verificando && <span className="font-mono text-[13px]">→</span>}
               </button>
-
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-chip border border-info-border bg-info-bg px-1.5 py-0.5 font-mono text-[9.5px] text-blue-text">
-                    DEMO
-                  </span>
-                  <span className="text-[12px] text-ink-5">Clave</span>
-                  <span className="font-mono text-[13px] font-medium tracking-[1.5px]">Demo2026!</span>
-                </div>
-              </div>
             </div>
           </form>
 
@@ -217,15 +207,11 @@ export function AccesoForm() {
       <footer className="relative z-10 flex flex-wrap items-center justify-between gap-5 border-t border-[#8FB9E6]/[.13] px-8 py-3.5">
         <div className="flex flex-wrap gap-6">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[18px] font-medium">12</span>
+            <span className="font-display text-[18px] font-medium">{unidades}</span>
             <span className="font-mono text-[9px] tracking-[.7px] text-[#7D8EA3]">UNIDADES</span>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[18px] font-medium">2</span>
-            <span className="font-mono text-[9px] tracking-[.7px] text-[#7D8EA3]">TORRES</span>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-display text-[18px] font-medium">871</span>
+            <span className="font-display text-[18px] font-medium">{m2.toLocaleString("es-CL")}</span>
             <span className="font-mono text-[9px] tracking-[.7px] text-[#7D8EA3]">M² EDIFICADOS</span>
           </div>
         </div>

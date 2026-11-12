@@ -7,5 +7,8 @@ export default async function AccesoPage() {
   const { data } = await supabase.auth.getUser();
   if (data.user) redirect("/");
 
-  return <AccesoForm />;
+  const { data: resumen } = await supabase.rpc("resumen_publico");
+  const fila = resumen?.[0];
+
+  return <AccesoForm unidades={fila?.unidades ?? 0} m2={fila?.m2 ?? 0} />;
 }

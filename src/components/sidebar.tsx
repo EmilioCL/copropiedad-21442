@@ -60,9 +60,11 @@ function SectionLabel({ children }: { children: ReactNode }) {
 export function Sidebar({
   rol,
   nombre,
+  unidades,
 }: {
   rol: Rol;
   nombre: string;
+  unidades: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -97,7 +99,7 @@ export function Sidebar({
           <div className="flex items-center gap-1.5">
             <span className="h-1.25 w-1.25 flex-none rounded-full bg-[#6FE3A8]" />
             <span className="whitespace-nowrap font-mono text-[9px] tracking-[.7px] text-[#7D8EA3]">
-              12 UNIDADES · 2 TORRES
+              {unidades} {unidades === 1 ? "UNIDAD" : "UNIDADES"}
             </span>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, Field, FormError, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
+import { Badge, Button, Card, DetailsModal, Empty, Field, FormError, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
 import { fechaHora, money } from "@/lib/money";
 
 const ESTADO_TONE = { cursada: "warn", apelada: "info", confirmada: "danger", anulada: "neutral" } as const;
@@ -127,29 +127,33 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                       {esCoprop && m.estado === "cursada" && (
                         <details>
                           <summary className="cursor-pointer list-none text-[12px] font-semibold text-blue-text">Apelar</summary>
-                          <form action={apelar} className="absolute z-20 mt-2 flex w-[260px] flex-col gap-2 rounded-card border border-border-strong bg-surface p-3 shadow-[0_18px_44px_-16px_rgba(24,27,31,.3)]">
-                            <input type="hidden" name="id" value={m.id} />
-                            <Textarea name="apelacion" rows={3} placeholder="Motivo de la apelación" required />
-                            <Button type="submit" className="text-[11px]">Enviar apelación</Button>
-                          </form>
+                          <DetailsModal width="280px">
+                            <form action={apelar} className="flex flex-col gap-2">
+                              <input type="hidden" name="id" value={m.id} />
+                              <Textarea name="apelacion" rows={3} placeholder="Motivo de la apelación" required />
+                              <Button type="submit" className="text-[11px]">Enviar apelación</Button>
+                            </form>
+                          </DetailsModal>
                         </details>
                       )}
                       {esComite && m.estado === "apelada" && (
                         <details>
                           <summary className="cursor-pointer list-none text-[12px] font-semibold text-blue-text">Resolver</summary>
-                          <form action={resolver} className="absolute z-20 mt-2 flex w-[260px] flex-col gap-2 rounded-card border border-border-strong bg-surface p-3 shadow-[0_18px_44px_-16px_rgba(24,27,31,.3)]">
-                            <input type="hidden" name="id" value={m.id} />
-                            <div className="text-[11px] text-ink-5">Apelación: {m.apelacion}</div>
-                            <Textarea name="resolucion" rows={2} placeholder="Resolución" required />
-                            <div className="flex gap-2">
-                              <Button type="submit" name="estado" value="confirmada" className="flex-1 text-[11px]">
-                                Confirmar
-                              </Button>
-                              <Button type="submit" name="estado" value="anulada" variant="danger" className="flex-1 text-[11px]">
-                                Anular
-                              </Button>
-                            </div>
-                          </form>
+                          <DetailsModal width="280px">
+                            <form action={resolver} className="flex flex-col gap-2">
+                              <input type="hidden" name="id" value={m.id} />
+                              <div className="text-[11px] text-ink-5">Apelación: {m.apelacion}</div>
+                              <Textarea name="resolucion" rows={2} placeholder="Resolución" required />
+                              <div className="flex gap-2">
+                                <Button type="submit" name="estado" value="confirmada" className="flex-1 text-[11px]">
+                                  Confirmar
+                                </Button>
+                                <Button type="submit" name="estado" value="anulada" variant="danger" className="flex-1 text-[11px]">
+                                  Anular
+                                </Button>
+                              </div>
+                            </form>
+                          </DetailsModal>
                         </details>
                       )}
                     </Td>

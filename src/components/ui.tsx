@@ -69,6 +69,25 @@ export function Empty({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Envoltorio para usar dentro de un <details><summary>…</summary><DetailsModal>…</DetailsModal></details>.
+ * Al abrirse, centra el contenido en una capa fija de pantalla completa — evita que un
+ * popover posicionado "absolute" quede recortado o fuera de vista dentro de una tabla
+ * con scroll horizontal.
+ */
+export function DetailsModal({ children, width = "320px" }: { children: ReactNode; width?: string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+      <div
+        className="flex max-h-[85vh] flex-col gap-3 overflow-y-auto rounded-card border border-border-strong bg-surface p-5 text-left shadow-[0_18px_44px_-16px_rgba(24,27,31,.3)]"
+        style={{ width: "100%", maxWidth: width }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function Table({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-x-auto rounded-card border border-border-soft bg-surface">

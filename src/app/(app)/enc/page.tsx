@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, Field, FormError, Input, Select, Table, Td, Th } from "@/components/ui";
+import { Badge, Button, Card, DetailsModal, Empty, Field, FormError, Input, Select, Table, Td, Th } from "@/components/ui";
 import { fechaHora } from "@/lib/money";
 
 async function recibir(formData: FormData) {
@@ -99,11 +99,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                       {esConserje && !e.entregada && (
                         <details>
                           <summary className="cursor-pointer list-none text-[12px] font-semibold text-blue-text">Entregar</summary>
-                          <form action={entregar} className="absolute z-20 mt-2 flex w-[240px] flex-col gap-2 rounded-card border border-border-strong bg-surface p-3 shadow-[0_18px_44px_-16px_rgba(24,27,31,.3)]">
-                            <input type="hidden" name="id" value={e.id} />
-                            <Input name="retirada_por" placeholder="Retirada por" />
-                            <Button type="submit" className="text-[11px]">Confirmar entrega</Button>
-                          </form>
+                          <DetailsModal width="260px">
+                            <form action={entregar} className="flex flex-col gap-2">
+                              <input type="hidden" name="id" value={e.id} />
+                              <Input name="retirada_por" placeholder="Retirada por" />
+                              <Button type="submit" className="text-[11px]">Confirmar entrega</Button>
+                            </form>
+                          </DetailsModal>
                         </details>
                       )}
                     </Td>

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, Field, FormError, Input, Kpi, Select, Table, Td, Th } from "@/components/ui";
+import { Badge, Button, Card, DetailsModal, Empty, Field, FormError, Input, Kpi, Select, Table, Td, Th } from "@/components/ui";
 import { money, porcentaje } from "@/lib/money";
 
 type OcupanteT = "Propietario residente" | "Arrendatario" | "Propietario no residente";
@@ -36,27 +36,30 @@ async function crearUnidad(formData: FormData) {
     redirect("/res?error=" + encodeURIComponent("Completa código, m² y propietario."));
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("unidades").insert({
-    condominio_id: perfil.condominioId,
-    codigo,
-    m2,
-    propietario,
-    ocupante,
-    ocupante_nombre,
-    email,
-  });
+  const copropietarioUserId = String(formData.get("copropietario_user_id") ?? "").trim() || null;
 
-  if (error) {
-    redirect("/res?error=" + encodeURIComponent(error.message.includes("duplicate") ? `Ya existe la unidad ${codigo}.` : "No se pudo crear la unidad."));
+  const supabase = await createClient();
+  const { data: nueva, error } = await supabase
+    .from("unidades")
+    .insert({ condominio_id: perfil.condominioId, codigo, m2, propietario, ocupante, ocupante_nombre, email })
+    .select("id")
+    .single();
+
+  if (error || !nueva) {
+    redirect("/res?error=" + encodeURIComponent(error?.message.includes("duplicate") ? `Ya existe la unidad ${codigo}.` : "No se pudo crear la unidad."));
   }
+
+  if (copropietarioUserId) {
+    await supabase.from("perfiles").update({ unidad_id: nueva.id }).eq("user_id", copropietarioUserId).eq("condominio_id", perfil.condominioId);
+  }
+
   revalidatePath("/res");
   redirect("/res");
 }
 
 async function editarUnidad(formData: FormData) {
   "use server";
-  await requireVista("res");
+  const perfil = await requireVista("res");
   const id = String(formData.get("id"));
   const codigo = String(formData.get("codigo") ?? "").trim();
   const m2 = Number(formData.get("m2"));
@@ -64,6 +67,7 @@ async function editarUnidad(formData: FormData) {
   const ocupante = String(formData.get("ocupante") ?? "Propietario residente") as OcupanteT;
   const ocupante_nombre = String(formData.get("ocupante_nombre") ?? "").trim() || null;
   const email = String(formData.get("email") ?? "").trim() || null;
+  const copropietarioUserId = String(formData.get("copropietario_user_id") ?? "").trim() || null;
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -74,6 +78,11 @@ async function editarUnidad(formData: FormData) {
   if (error) {
     redirect("/res?error=" + encodeURIComponent("No se pudo guardar la unidad."));
   }
+
+  if (copropietarioUserId) {
+    await supabase.from("perfiles").update({ unidad_id: id }).eq("user_id", copropietarioUserId).eq("condominio_id", perfil.condominioId);
+  }
+
   revalidatePath("/res");
   redirect("/res");
 }
@@ -86,6 +95,13 @@ export default async function Page({
   const perfil = await requireVista("res");
   const { error } = await searchParams;
   const supabase = await createClient();
+
+  const { data: coprops } = await supabase
+    .from("perfiles")
+    .select("user_id, nombre, unidad_id")
+    .eq("condominio_id", perfil.condominioId)
+    .eq("rol", "copropietario");
+
   const { data } = await supabase
     .from("v_unidades")
     .select("id, codigo, m2, propietario, ocupante, ocupante_nombre, email, derechos, deuda, mora, habil")
@@ -149,37 +165,51 @@ export default async function Page({
                 </Td>
                 {esAdmin && (
                   <Td>
-                    <details className="relative">
+                    <details>
                       <summary className="cursor-pointer list-none text-[12px] font-semibold text-blue-text">Editar</summary>
-                      <form
-                        action={editarUnidad}
-                        className="absolute right-0 z-20 mt-2 flex w-[320px] flex-col gap-3 rounded-card border border-border-strong bg-surface p-4 shadow-[0_18px_44px_-16px_rgba(24,27,31,.3)]"
-                      >
-                        <input type="hidden" name="id" value={u.id} />
-                        <Field label="Código">
-                          <Input name="codigo" defaultValue={u.codigo} required />
-                        </Field>
-                        <Field label="m²">
-                          <Input name="m2" type="number" step="0.1" defaultValue={u.m2} required />
-                        </Field>
-                        <Field label="Propietario">
-                          <Input name="propietario" defaultValue={u.propietario} required />
-                        </Field>
-                        <Field label="Ocupante">
-                          <Select name="ocupante" defaultValue={u.ocupante}>
-                            <option>Propietario residente</option>
-                            <option>Arrendatario</option>
-                            <option>Propietario no residente</option>
-                          </Select>
-                        </Field>
-                        <Field label="Nombre del ocupante (si no es el propietario)">
-                          <Input name="ocupante_nombre" defaultValue={u.ocupante_nombre ?? ""} />
-                        </Field>
-                        <Field label="Correo">
-                          <Input name="email" type="email" defaultValue={u.email ?? ""} />
-                        </Field>
-                        <Button type="submit">Guardar</Button>
-                      </form>
+                      <DetailsModal>
+                        <form action={editarUnidad} className="flex flex-col gap-3">
+                          <input type="hidden" name="id" value={u.id} />
+                          <Field label="Código">
+                            <Input name="codigo" defaultValue={u.codigo} required />
+                          </Field>
+                          <Field label="m²">
+                            <Input name="m2" type="number" step="0.1" defaultValue={u.m2} required />
+                          </Field>
+                          <Field label="Propietario">
+                            <Input name="propietario" defaultValue={u.propietario} required />
+                          </Field>
+                          <Field label="Ocupante">
+                            <Select name="ocupante" defaultValue={u.ocupante}>
+                              <option>Propietario residente</option>
+                              <option>Arrendatario</option>
+                              <option>Propietario no residente</option>
+                            </Select>
+                          </Field>
+                          <Field label="Nombre del ocupante (si no es el propietario)">
+                            <Input name="ocupante_nombre" defaultValue={u.ocupante_nombre ?? ""} />
+                          </Field>
+                          <Field label="Correo">
+                            <Input name="email" type="email" defaultValue={u.email ?? ""} />
+                          </Field>
+                          <Field label="Cuenta de copropietario vinculada">
+                            <Select
+                              name="copropietario_user_id"
+                              defaultValue={coprops?.find((c) => c.unidad_id === u.id)?.user_id ?? ""}
+                            >
+                              <option value="">Sin vincular</option>
+                              {(coprops ?? [])
+                                .filter((c) => !c.unidad_id || c.unidad_id === u.id)
+                                .map((c) => (
+                                  <option key={c.user_id} value={c.user_id}>
+                                    {c.nombre}
+                                  </option>
+                                ))}
+                            </Select>
+                          </Field>
+                          <Button type="submit">Guardar</Button>
+                        </form>
+                      </DetailsModal>
                     </details>
                   </Td>
                 )}
@@ -215,6 +245,18 @@ export default async function Page({
               </Field>
               <Field label="Correo">
                 <Input name="email" type="email" />
+              </Field>
+              <Field label="Cuenta de copropietario vinculada (opcional)">
+                <Select name="copropietario_user_id" defaultValue="">
+                  <option value="">Sin vincular</option>
+                  {(coprops ?? [])
+                    .filter((c) => !c.unidad_id)
+                    .map((c) => (
+                      <option key={c.user_id} value={c.user_id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                </Select>
               </Field>
               <div className="col-span-2">
                 <Button type="submit">Crear unidad</Button>

@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, Field, Input, Table, Td, Textarea, Th } from "@/components/ui";
+import { Badge, Button, Card, Empty, Field, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
 import { fecha, money } from "@/lib/money";
 
 async function crear(formData: FormData) {
   "use server";
   const perfil = await requireVista("pers");
+  const conserjeUserId = String(formData.get("conserje_user_id") ?? "").trim() || null;
   const supabase = await createClient();
   await supabase.from("trabajadores").insert({
     condominio_id: perfil.condominioId,
@@ -19,8 +20,10 @@ async function crear(formData: FormData) {
     jornada: String(formData.get("jornada") ?? "").trim() || null,
     sueldo: Number(formData.get("sueldo") ?? 0) || null,
     contrato: String(formData.get("contrato") ?? "").trim() || null,
+    user_id: conserjeUserId,
   });
   revalidatePath("/pers");
+  revalidatePath("/per");
   redirect("/pers");
 }
 
@@ -41,9 +44,18 @@ export default async function Page() {
 
   const { data: trabajadores } = await supabase
     .from("trabajadores")
-    .select("id, nombre, rut, telefono, cargo, jornada, sueldo, contrato, activo, desde")
+    .select("id, nombre, rut, telefono, cargo, jornada, sueldo, contrato, activo, desde, user_id")
     .eq("condominio_id", perfil.condominioId)
     .order("desde", { ascending: false });
+
+  const { data: conserjes } = await supabase
+    .from("perfiles")
+    .select("user_id, nombre")
+    .eq("condominio_id", perfil.condominioId)
+    .eq("rol", "conserje");
+
+  const yaVinculados = new Set((trabajadores ?? []).map((t) => t.user_id).filter(Boolean));
+  const conserjesSinVincular = (conserjes ?? []).filter((c) => !yaVinculados.has(c.user_id));
 
   return (
     <>
@@ -80,6 +92,11 @@ export default async function Page() {
                 <Td>{fecha(t.desde)}</Td>
                 <Td>
                   <Badge tone={t.activo ? "success" : "neutral"}>{t.activo ? "Activo" : "Suspendido"}</Badge>
+                  {t.user_id && (
+                    <span className="ml-1.5">
+                      <Badge tone="info">Con acceso</Badge>
+                    </span>
+                  )}
                 </Td>
                 <Td>
                   <form action={alternarActivo}>
@@ -120,6 +137,16 @@ export default async function Page() {
             </Field>
             <Field label="Contrato">
               <Input name="contrato" placeholder="Indefinido / Plazo fijo" />
+            </Field>
+            <Field label="Cuenta de conserje vinculada (opcional)">
+              <Select name="conserje_user_id" defaultValue="">
+                <option value="">Sin vincular</option>
+                {conserjesSinVincular.map((c) => (
+                  <option key={c.user_id} value={c.user_id}>
+                    {c.nombre}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <div className="col-span-2">
               <Button type="submit">Crear</Button>

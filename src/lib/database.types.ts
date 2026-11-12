@@ -1739,6 +1739,13 @@ export type Database = {
         Args: { c: string; p_medio: string; p_monto: number; u: string }
         Returns: string
       }
+      resumen_publico: {
+        Args: { c?: string }
+        Returns: {
+          m2: number
+          unidades: number
+        }[]
+      }
       rol_en: {
         Args: { c: string }
         Returns: Database["public"]["Enums"]["rol_t"]
