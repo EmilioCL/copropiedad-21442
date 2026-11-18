@@ -24,6 +24,14 @@ async function convocar(formData: FormData) {
     redirect("/asam?error=" + encodeURIComponent("Completa fecha, hora y lugar."));
   }
 
+  // Ley 21.442: la citación debe anticiparse entre 5 y 15 días corridos (grupo de Felipe, CA1).
+  const hoy = new Date(new Date().toDateString());
+  const diaAsamblea = new Date(fecha_a + "T00:00:00");
+  const diasAnticipacion = Math.round((diaAsamblea.getTime() - hoy.getTime()) / 86400000);
+  if (diasAnticipacion < 5 || diasAnticipacion > 15) {
+    redirect("/asam?error=" + encodeURIComponent("La citación debe anticiparse entre 5 y 15 días corridos."));
+  }
+
   const quorum_requerido = QUORUM[tipo][citacion === "Primera" ? "primera" : "segunda"];
   const folio = `${perfil.rol === "comite" ? "AC" : "AS"}-${Date.now()}`;
 
@@ -72,7 +80,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
     <>
       <PageHeader
         title="Convocatoria de asamblea"
-        subtitle="Citaciones y quórum. El administrador debe validar la habilidad de voto antes de emitir la citación; el comité puede convocar sin validar."
+        subtitle="Citaciones y quórum, con entre 5 y 15 días corridos de anticipación. El administrador debe validar la habilidad de voto antes de emitir la citación; el comité puede convocar sin validar."
         nota={esAdmin ? "puedes convocar y validar." : "puedes convocar sin validar la habilidad."}
         rol={perfil.rol}
         nombre={perfil.nombre}

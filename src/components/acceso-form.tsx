@@ -71,7 +71,7 @@ export function AccesoForm({ unidades, m2 }: { unidades: number; m2: number }) {
         <div className="flex items-center gap-3">
           <Logo tone="light" className="h-11 w-11 flex-none" />
           <div className="flex flex-col gap-0.5">
-            <div className="font-display text-[19px] font-semibold tracking-[-.3px]">Parque Los Almendros</div>
+            <div className="font-display text-[19px] font-semibold tracking-[-.3px]">Copropiedad 21442</div>
             <div className="font-mono text-[9.5px] tracking-[1.1px] text-[#7D8EA3]">PLATAFORMA DE ADMINISTRACIÓN</div>
           </div>
         </div>

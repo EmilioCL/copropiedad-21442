@@ -13,29 +13,18 @@ async function proponer(formData: FormData) {
 
   const pie = Number(formData.get("pie") ?? 0);
   const cuotas = Number(formData.get("cuotas") ?? 6);
-  const motivo = String(formData.get("motivo") ?? "").trim() || null;
+  const motivo = String(formData.get("motivo") ?? "").trim() || undefined;
 
   const supabase = await createClient();
-  const { data: unidad } = await supabase.from("v_unidades").select("deuda").eq("id", perfil.unidadId).single();
-  const deuda = unidad?.deuda ?? 0;
-
-  if (deuda <= 0) redirect("/sol?error=" + encodeURIComponent("No tienes deuda vigente."));
-
-  const valor_cuota = Math.ceil((deuda - pie) / cuotas / 1000) * 1000;
-
-  const { error } = await supabase.from("propuestas_convenio").insert({
-    condominio_id: perfil.condominioId,
-    unidad_id: perfil.unidadId,
-    folio: `PC-${Date.now()}`,
-    origen: "Copropietario",
-    deuda,
-    pie,
-    cuotas,
-    valor_cuota,
-    motivo,
+  const { error } = await supabase.rpc("proponer_convenio", {
+    c: perfil.condominioId,
+    u: perfil.unidadId,
+    p_pie: pie,
+    p_cuotas: cuotas,
+    p_motivo: motivo,
   });
 
-  if (error) redirect("/sol?error=" + encodeURIComponent("No se pudo enviar la propuesta."));
+  if (error) redirect("/sol?error=" + encodeURIComponent(error.message));
   revalidatePath("/sol");
   revalidatePath("/prop");
   redirect("/sol");
@@ -61,8 +50,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
     <>
       <PageHeader
         title="Repactar mi deuda"
-        subtitle="Propón un convenio de pago para la deuda de tu unidad. El administrador debe autorizarlo."
-        nota="tu propuesta queda pendiente hasta que el administrador la autorice."
+        subtitle="Propón un convenio de pago para la deuda de tu unidad. El comité de administración debe aprobarlo."
+        nota="tu propuesta queda pendiente hasta que el comité la apruebe."
         rol={perfil.rol}
         nombre={perfil.nombre}
       />

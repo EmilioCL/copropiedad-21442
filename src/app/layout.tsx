@@ -22,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Copropiedad 21442 · Parque Los Almendros",
+  title: "Copropiedad 21442",
   description: "Plataforma de administración de condominios bajo la Ley N° 21.442.",
 };
 

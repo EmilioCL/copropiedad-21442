@@ -1,9 +1,9 @@
--- Datos de demostración: Condominio Parque Los Almendros (12 unidades, 2 torres)
+-- Datos de demostración: Condominio Demo (12 unidades, 2 torres)
 -- Ejecutar después de 0001_schema.sql. Los perfiles se crean después de registrar
 -- usuarios en Supabase Auth (ver docs/PASOS.md, paso 4).
 
 insert into condominios (id, nombre, direccion)
-values ('00000000-0000-0000-0000-000000000001', 'Parque Los Almendros', 'Av. Los Almendros 1450, Santiago');
+values ('00000000-0000-0000-0000-000000000001', 'Condominio Demo', 'Av. Siempre Viva 1450, Santiago');
 
 insert into unidades (condominio_id, codigo, m2, propietario, ocupante, ocupante_nombre, email) values
 ('00000000-0000-0000-0000-000000000001','A-101',62,'María Contreras Bravo','Propietario residente',null,'m.contreras@correo.cl'),

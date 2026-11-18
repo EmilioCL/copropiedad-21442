@@ -90,9 +90,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                     <Td>{money(u.deuda)}</Td>
                     <Td>{(u.mora ?? 0) > 0 ? money(u.mora) : "—"}</Td>
                     <Td>
-                      <Badge tone={u.habil ? "success" : "danger"}>
-                        {u.habil ? (u.convenio_id ? "Con convenio" : "Hábil") : "Inhábil"}
-                      </Badge>
+                      {u.habil ? (
+                        <Badge tone="success">{u.convenio_id ? "Con convenio" : "Hábil"}</Badge>
+                      ) : u.convenio_id ? (
+                        <Badge tone="warn">Convenio · falta 1ª cuota</Badge>
+                      ) : (
+                        <Badge tone="danger">Inhábil</Badge>
+                      )}
                     </Td>
                   </tr>
                 ))}

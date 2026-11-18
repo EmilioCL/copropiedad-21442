@@ -32,6 +32,7 @@ import {
   IconMultas,
   IconEspacios,
   IconBitacora,
+  IconConfig,
   IconCerrarSesion,
 } from "@/components/icons";
 import { NOMBRE_ROL } from "@/lib/permisos";
@@ -94,7 +95,7 @@ export function Sidebar({
         <Logo tone="dark" className="flex-none" style={{ animation: "logoBreathe 5s ease-in-out infinite" }} />
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="font-display text-[14px] font-semibold leading-[1.18] tracking-[-.2px]">
-            Parque Los Almendros
+            Copropiedad 21442
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-1.25 w-1.25 flex-none rounded-full bg-[#6FE3A8]" />
@@ -136,6 +137,7 @@ export function Sidebar({
             <NavLink item={{ href: "/gc", label: "Emitir gastos comunes", icon: <IconGastosComunes /> }} activo={pathname === "/gc"} />
             <NavLink item={{ href: "/rec", label: "Recaudación", icon: <IconRecaudacion /> }} activo={pathname === "/rec"} />
             <NavLink item={{ href: "/per", label: "Personal", icon: <IconPersonalConserjeria /> }} activo={pathname === "/per"} />
+            <NavLink item={{ href: "/config", label: "Parámetros del condominio", icon: <IconConfig /> }} activo={pathname === "/config"} />
           </>
         )}
 
@@ -148,9 +150,7 @@ export function Sidebar({
             <NavLink item={{ href: "/asam", label: "Convocar asamblea", icon: <IconAsamblea /> }} activo={pathname === "/asam"} />
             <NavLink item={{ href: "/vot", label: "Votaciones", icon: <IconVotaciones /> }} activo={pathname === "/vot"} />
             <NavLink item={{ href: "/conv", label: "Convenio de pago", icon: <IconConvenio /> }} activo={pathname === "/conv"} />
-            {esAdmin && (
-              <NavLink item={{ href: "/prop", label: "Convenios propuestos", icon: <IconPropuestas /> }} activo={pathname === "/prop"} />
-            )}
+            <NavLink item={{ href: "/prop", label: "Convenios propuestos", icon: <IconPropuestas /> }} activo={pathname === "/prop"} />
             <NavLink item={{ href: "/rend", label: "Rendir cuentas", icon: <IconRendirCuentas /> }} activo={pathname === "/rend"} />
             {esAdmin && (
               <>

@@ -119,7 +119,7 @@ export function Topbar({ rol, nombre }: { rol: Rol; nombre: string }) {
 
       <div className="flex items-center gap-2.25 rounded-pill border border-border-soft bg-surface px-3.75 py-2.25 shadow-[0_1px_3px_rgba(24,27,31,.055),0_1px_2px_rgba(24,27,31,.03)]">
         <span className="h-1.75 w-1.75 rounded-full bg-success shadow-[0_0_0_3px_rgba(31,130,86,.15)]" />
-        <span className="text-[12.5px] font-medium">Cond. Parque Los Almendros</span>
+        <span className="text-[12.5px] font-medium">Copropiedad 21442</span>
       </div>
 
       <div className="rounded-pill border border-border-soft bg-surface-2 px-3.5 py-2.25 font-mono text-[11px] text-ink-4">

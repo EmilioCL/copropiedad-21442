@@ -288,6 +288,15 @@ export function IconBuscar(p: IconProps) {
   );
 }
 
+export function IconConfig(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <circle cx="10" cy="10" r="2.6" />
+      <path d="M10 3.5v2M10 14.5v2M16.5 10h-2M5.5 10h-2M14.6 5.4l-1.4 1.4M6.8 13.2l-1.4 1.4M14.6 14.6l-1.4-1.4M6.8 6.8 5.4 5.4" />
+    </svg>
+  );
+}
+
 export function IconCerrarSesion(p: IconProps) {
   return (
     <svg {...base(p)}>

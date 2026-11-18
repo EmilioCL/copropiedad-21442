@@ -3,30 +3,16 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, FormError, Table, Td, Th } from "@/components/ui";
+import { Badge, Button, Card, Empty, FormError, Table, Td, Textarea, Th } from "@/components/ui";
 import { fechaHora, money } from "@/lib/money";
 
-async function autorizar(formData: FormData) {
+async function aprobar(formData: FormData) {
   "use server";
-  const perfil = await requireVista("prop");
+  await requireVista("prop");
   const id = String(formData.get("id"));
-  const unidad_id = String(formData.get("unidad_id"));
-  const pie = Number(formData.get("pie"));
-  const cuotas = Number(formData.get("cuotas"));
-  const origen = String(formData.get("origen"));
-
   const supabase = await createClient();
-  const { error } = await supabase.rpc("celebrar_convenio", {
-    c: perfil.condominioId,
-    u: unidad_id,
-    p_pie: pie,
-    p_cuotas: cuotas,
-    p_origen: `Propuesta de ${origen}`,
-  });
-
+  const { error } = await supabase.rpc("aprobar_propuesta_convenio", { p_id: id });
   if (error) redirect("/prop?error=" + encodeURIComponent(error.message));
-
-  await supabase.from("propuestas_convenio").delete().eq("id", id);
   revalidatePath("/prop");
   revalidatePath("/conv");
   revalidatePath("/rec");
@@ -37,8 +23,10 @@ async function rechazar(formData: FormData) {
   "use server";
   await requireVista("prop");
   const id = String(formData.get("id"));
+  const motivo = String(formData.get("motivo") ?? "").trim() || undefined;
   const supabase = await createClient();
-  await supabase.from("propuestas_convenio").delete().eq("id", id);
+  const { error } = await supabase.rpc("rechazar_propuesta_convenio", { p_id: id, p_motivo: motivo });
+  if (error) redirect("/prop?error=" + encodeURIComponent(error.message));
   revalidatePath("/prop");
   redirect("/prop");
 }
@@ -47,6 +35,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const perfil = await requireVista("prop");
   const { error } = await searchParams;
   const supabase = await createClient();
+  const esComite = perfil.rol === "comite";
 
   const { data: propuestas } = await supabase
     .from("propuestas_convenio")
@@ -58,8 +47,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
     <>
       <PageHeader
         title="Convenios propuestos"
-        subtitle="Propuestas del comité o de copropietarios, a la espera de autorización."
-        nota="solo el administrador autoriza o rechaza."
+        subtitle="Propuestas del administrador, el comité o un copropietario, a la espera de decisión."
+        nota={esComite ? "solo tú apruebas o rechazas." : "el comité decide; aquí solo puedes ver el estado."}
         rol={perfil.rol}
         nombre={perfil.nombre}
       />
@@ -100,22 +89,21 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                 </tbody>
               </Table>
               {p.motivo && <div className="mt-2 text-[12.5px] text-ink-5">{p.motivo}</div>}
-              <div className="mt-3 flex gap-2">
-                <form action={autorizar}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <input type="hidden" name="unidad_id" value={p.unidad_id} />
-                  <input type="hidden" name="pie" value={p.pie} />
-                  <input type="hidden" name="cuotas" value={p.cuotas} />
-                  <input type="hidden" name="origen" value={p.origen} />
-                  <Button type="submit">Autorizar</Button>
-                </form>
-                <form action={rechazar}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <Button type="submit" variant="secondary">
-                    Rechazar
-                  </Button>
-                </form>
-              </div>
+              {esComite && (
+                <div className="mt-3 flex items-start gap-2">
+                  <form action={aprobar}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <Button type="submit">Aprobar</Button>
+                  </form>
+                  <form action={rechazar} className="flex items-start gap-2">
+                    <input type="hidden" name="id" value={p.id} />
+                    <Textarea name="motivo" rows={1} placeholder="Motivo del rechazo (opcional)" className="w-[220px]" />
+                    <Button type="submit" variant="secondary">
+                      Rechazar
+                    </Button>
+                  </form>
+                </div>
+              )}
             </Card>
           ))}
         </div>

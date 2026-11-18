@@ -13,26 +13,36 @@ async function cursar(formData: FormData) {
   const perfil = await requireVista("mul");
   const unidad_id = String(formData.get("unidad_id") ?? "");
   const infraccion = String(formData.get("infraccion") ?? "").trim();
-  const detalle = String(formData.get("detalle") ?? "").trim() || null;
-  const monto = Number(formData.get("monto") ?? 0);
+  const detalle = String(formData.get("detalle") ?? "").trim();
+  const monto_utm = Number(formData.get("monto_utm") ?? 0);
 
-  if (!unidad_id || !infraccion || monto <= 0) {
-    redirect("/mul?error=" + encodeURIComponent("Completa unidad, infracción y monto."));
+  if (!unidad_id || !infraccion || monto_utm <= 0) {
+    redirect("/mul?error=" + encodeURIComponent("Completa unidad, infracción y monto en UTM."));
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("multas").insert({
-    condominio_id: perfil.condominioId,
-    unidad_id,
-    folio: `MU-${Date.now()}`,
-    infraccion,
-    detalle,
-    monto,
-    cursada_por: perfil.userId,
+  const { error } = await supabase.rpc("cursar_multa", {
+    c: perfil.condominioId,
+    u: unidad_id,
+    p_infraccion: infraccion,
+    p_detalle: detalle,
+    p_monto_utm: monto_utm,
   });
 
-  if (error) redirect("/mul?error=" + encodeURIComponent("No se pudo cursar la multa."));
+  if (error) redirect("/mul?error=" + encodeURIComponent(error.message));
   revalidatePath("/mul");
+  redirect("/mul");
+}
+
+async function pagar(formData: FormData) {
+  "use server";
+  await requireVista("mul");
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("pagar_multa", { m: id });
+  if (error) redirect("/mul?error=" + encodeURIComponent(error.message));
+  revalidatePath("/mul");
+  revalidatePath("/fondo");
   redirect("/mul");
 }
 
@@ -71,7 +81,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const [{ data: multas }, { data: unidades }] = await Promise.all([
     supabase
       .from("multas")
-      .select("id, folio, infraccion, detalle, monto, estado, apelacion, resolucion, ts, unidades(codigo)")
+      .select("id, folio, infraccion, detalle, monto, monto_utm, estado, apelacion, resolucion, pagada, ts, unidades(codigo)")
       .eq("condominio_id", perfil.condominioId)
       .order("ts", { ascending: false }),
     supabase.from("unidades").select("id, codigo").eq("condominio_id", perfil.condominioId).order("codigo"),
@@ -80,12 +90,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const puedeCursar = perfil.rol === "administrador" || perfil.rol === "conserje";
   const esComite = perfil.rol === "comite";
   const esCoprop = perfil.rol === "copropietario";
+  const esAdmin = perfil.rol === "administrador";
 
   return (
     <>
       <PageHeader
         title="Multas"
-        subtitle="Multas cursadas, apeladas y resueltas. Una multa anulada no es exigible y aparece tachada en el estado de cuenta."
+        subtitle="Multas cursadas en UTM (tope 1-3, o hasta 6 si hay reincidencia en 12 meses). Lo pagado se abona al Fondo de Reserva. Una multa anulada no es exigible."
         nota={esComite ? "resuelves apelaciones." : esCoprop ? "puedes apelar tus multas." : "cursas multas por infracciones."}
         rol={perfil.rol}
         nombre={perfil.nombre}
@@ -119,11 +130,23 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                       <div className={m.estado === "anulada" ? "line-through" : ""}>{m.infraccion}</div>
                       {m.detalle && <div className="text-[11px] text-ink-5">{m.detalle}</div>}
                     </Td>
-                    <Td>{money(m.monto)}</Td>
                     <Td>
-                      <Badge tone={ESTADO_TONE[m.estado as keyof typeof ESTADO_TONE]}>{m.estado}</Badge>
+                      {money(m.monto)}
+                      {m.monto_utm && <div className="text-[11px] text-ink-5">{m.monto_utm} UTM</div>}
                     </Td>
                     <Td>
+                      <Badge tone={ESTADO_TONE[m.estado as keyof typeof ESTADO_TONE]}>{m.estado}</Badge>
+                      {m.pagada && <div className="mt-1"><Badge tone="success">Pagada</Badge></div>}
+                    </Td>
+                    <Td>
+                      {esAdmin && !m.pagada && (m.estado === "cursada" || m.estado === "confirmada") && (
+                        <form action={pagar} className="mb-1">
+                          <input type="hidden" name="id" value={m.id} />
+                          <Button type="submit" variant="secondary" className="text-[11px]">
+                            Registrar pago
+                          </Button>
+                        </form>
+                      )}
                       {esCoprop && m.estado === "cursada" && (
                         <details>
                           <summary className="cursor-pointer list-none text-[12px] font-semibold text-blue-text">Apelar</summary>
@@ -184,8 +207,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
               <Field label="Detalle (opcional)">
                 <Textarea name="detalle" rows={2} />
               </Field>
-              <Field label="Monto">
-                <Input name="monto" type="number" min={1} required />
+              <Field label="Monto (UTM, tope 3 — o 6 si hay reincidencia en 12 meses)">
+                <Input name="monto_utm" type="number" min={1} max={6} step={0.1} defaultValue={1} required />
               </Field>
               <Button type="submit">Cursar multa</Button>
             </form>

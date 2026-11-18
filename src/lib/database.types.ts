@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.18"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accesos: {
@@ -99,6 +74,43 @@ export type Database = {
             columns: ["asamblea_id"]
             isOneToOne: true
             referencedRelation: "asambleas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asamblea_habiles: {
+        Row: {
+          asamblea_id: string
+          unidad_id: string
+        }
+        Insert: {
+          asamblea_id: string
+          unidad_id: string
+        }
+        Update: {
+          asamblea_id?: string
+          unidad_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asamblea_habiles_asamblea_id_fkey"
+            columns: ["asamblea_id"]
+            isOneToOne: false
+            referencedRelation: "asambleas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asamblea_habiles_unidad_id_fkey"
+            columns: ["unidad_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asamblea_habiles_unidad_id_fkey"
+            columns: ["unidad_id"]
+            isOneToOne: false
+            referencedRelation: "v_unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -358,6 +370,7 @@ export type Database = {
           id: string
           nombre: string
           tolerancia_cuotas: number
+          valor_utm: number
         }
         Insert: {
           aporte_reserva?: number
@@ -367,6 +380,7 @@ export type Database = {
           id?: string
           nombre: string
           tolerancia_cuotas?: number
+          valor_utm?: number
         }
         Update: {
           aporte_reserva?: number
@@ -376,6 +390,7 @@ export type Database = {
           id?: string
           nombre?: string
           tolerancia_cuotas?: number
+          valor_utm?: number
         }
         Relationships: []
       }
@@ -783,6 +798,9 @@ export type Database = {
           id: string
           infraccion: string
           monto: number
+          monto_utm: number | null
+          pagada: boolean
+          pagada_en: string | null
           resolucion: string | null
           ts: string
           unidad_id: string
@@ -797,6 +815,9 @@ export type Database = {
           id?: string
           infraccion: string
           monto: number
+          monto_utm?: number | null
+          pagada?: boolean
+          pagada_en?: string | null
           resolucion?: string | null
           ts?: string
           unidad_id: string
@@ -811,6 +832,9 @@ export type Database = {
           id?: string
           infraccion?: string
           monto?: number
+          monto_utm?: number | null
+          pagada?: boolean
+          pagada_en?: string | null
           resolucion?: string | null
           ts?: string
           unidad_id?: string
@@ -1687,22 +1711,33 @@ export type Database = {
       }
     }
     Functions: {
-      asamblea_validar: { Args: { a: string }; Returns: undefined }
-      celebrar_convenio: {
+      actualizar_parametros: {
         Args: {
           c: string
-          p_cuotas: number
-          p_origen: string
-          p_pie: number
-          u: string
+          p_aporte_reserva: number
+          p_dia: number
+          p_tolerancia: number
+          p_valor_utm: number
         }
-        Returns: string
+        Returns: undefined
       }
+      aprobar_propuesta_convenio: { Args: { p_id: string }; Returns: string }
+      asamblea_validar: { Args: { a: string }; Returns: undefined }
       cobranza_abrir: {
         Args: { c: string; p_motivo: string; u: string }
         Returns: string
       }
       convenios_revisar_vencidos: { Args: never; Returns: number }
+      cursar_multa: {
+        Args: {
+          c: string
+          p_detalle: string
+          p_infraccion: string
+          p_monto_utm: number
+          u: string
+        }
+        Returns: string
+      }
       emitir_gastos: {
         Args: { c: string; p_partidas: Json; p_periodo: string }
         Returns: string
@@ -1735,6 +1770,25 @@ export type Database = {
         }
         Returns: undefined
       }
+      pagar_cuota_convenio: {
+        Args: { p_convenio_id: string; p_n: number }
+        Returns: undefined
+      }
+      pagar_multa: { Args: { m: string }; Returns: undefined }
+      proponer_convenio: {
+        Args: {
+          c: string
+          p_cuotas: number
+          p_motivo?: string
+          p_pie: number
+          u: string
+        }
+        Returns: string
+      }
+      rechazar_propuesta_convenio: {
+        Args: { p_id: string; p_motivo?: string }
+        Returns: undefined
+      }
       registrar_pago: {
         Args: { c: string; p_medio: string; p_monto: number; u: string }
         Returns: string
@@ -1763,7 +1817,7 @@ export type Database = {
         | "Arrendatario"
         | "Propietario no residente"
       periodicidad_t: "Mensual" | "Trimestral" | "Semestral" | "Anual"
-      propuesta_origen_t: "Comité" | "Copropietario"
+      propuesta_origen_t: "Comité" | "Copropietario" | "Administrador"
       quorum_t: "Mayoría simple" | "Mayoría absoluta de los derechos"
       rol_t: "administrador" | "comite" | "copropietario" | "conserje"
       voto_t: "favor" | "contra" | "abst"
@@ -1892,9 +1946,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       asamblea_tipo_t: ["Ordinaria", "Extraordinaria"],
@@ -1908,7 +1959,7 @@ export const Constants = {
         "Propietario no residente",
       ],
       periodicidad_t: ["Mensual", "Trimestral", "Semestral", "Anual"],
-      propuesta_origen_t: ["Comité", "Copropietario"],
+      propuesta_origen_t: ["Comité", "Copropietario", "Administrador"],
       quorum_t: ["Mayoría simple", "Mayoría absoluta de los derechos"],
       rol_t: ["administrador", "comite", "copropietario", "conserje"],
       voto_t: ["favor", "contra", "abst"],
