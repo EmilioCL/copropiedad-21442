@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Badge, Card, Empty, Kpi, Table, Td, Th } from "@/components/ui";
 import { fechaHora, money, porcentaje } from "@/lib/money";
+import { describirAccion } from "@/lib/bitacora";
 
 export default async function Page() {
   const perfil = await requireVista("panel");
@@ -68,7 +69,7 @@ export default async function Page() {
                 <li key={i} className="flex items-start gap-3 border-b border-[#F0EEE9] pb-3.5 last:border-b-0 last:pb-0">
                   <span className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-blue-text" />
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-[12.5px] font-medium text-ink-2">{b.accion}</span>
+                    <span className="text-[12.5px] font-medium text-ink-2">{describirAccion(b.accion)}</span>
                     <span className="text-[11.5px] text-ink-5">
                       {b.actor} · {fechaHora(b.ts)}
                     </span>

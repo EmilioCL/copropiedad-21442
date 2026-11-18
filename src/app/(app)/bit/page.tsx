@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Empty, Table, Td, Th } from "@/components/ui";
 import { fechaHora } from "@/lib/money";
+import { describirAccion } from "@/lib/bitacora";
 
 export default async function Page() {
   const perfil = await requireVista("bit");
@@ -41,7 +42,7 @@ export default async function Page() {
               <tr key={e.id}>
                 <Td className="whitespace-nowrap">{fechaHora(e.ts)}</Td>
                 <Td className="capitalize">{e.actor}</Td>
-                <Td>{e.accion}</Td>
+                <Td>{describirAccion(e.accion)}</Td>
               </tr>
             ))}
           </tbody>
