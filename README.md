@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Copropiedad 21442
 
-## Getting Started
+Plataforma de administración de condominios bajo la **Ley N° 21.442 de Copropiedad Inmobiliaria**
+(Chile). Un mismo sistema, cuatro roles —administrador, comité de administración, copropietario
+y conserje— cada uno viendo y pudiendo hacer solo lo que la ley le reconoce.
 
-First, run the development server:
+Este proyecto integra, sobre una base propia ya funcional, las propuestas de tres grupos del
+curso (ver [ATRIBUCION.md](ATRIBUCION.md) para el detalle de qué idea vino de qué grupo y dónde
+quedó implementada).
+
+## Stack
+
+- **Next.js 16** (App Router, Server Actions) + **React 19** + TypeScript
+- **Supabase** — Postgres, Auth y Row Level Security. Las reglas de negocio que no son un simple
+  filtro de fila viven en funciones `SECURITY DEFINER` (ver `supabase/migrations/`), no en el
+  cliente.
+- **Tailwind CSS 4**
+- Desplegado en **Vercel**
+
+## Casos de uso
+
+| Módulo | Ruta | Quién |
+|---|---|---|
+| Gastos comunes y recaudación | `/gc`, `/rec` | Administrador |
+| Convenio de pago (con aprobación del comité) | `/conv`, `/prop`, `/sol` | Los 3 roles de gestión |
+| Asambleas y votaciones | `/asam`, `/vot` | Administrador, comité, copropietario |
+| Rendición de cuentas | `/rend` | Administrador, comité |
+| Fondo de reserva y cobranza | `/fondo`, `/cob` | Administrador |
+| Multas por infracción (en UTM) | `/mul` | Todos |
+| Conserjería (turnos, accesos, encomiendas) | `/turno`, `/acc`, `/enc` | Conserje |
+| Parámetros del condominio | `/config` | Administrador |
+| Notificaciones y bitácora | `/not`, `/bit` | Todos / gestión |
+
+El detalle de reglas de negocio (quién puede hacer qué, topes, plazos) está documentado como
+comentarios en cada migración de `supabase/migrations/`, en el orden en que se fueron agregando.
+
+## Correr en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Necesitas un archivo `.env.local` con las credenciales de un proyecto Supabase:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu-clave-publica>
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para aplicar el esquema completo a un proyecto Supabase nuevo:
 
-## Learn More
+```bash
+npx supabase db push --remote
+```
 
-To learn more about Next.js, take a look at the following resources:
+`supabase/seed.sql` tiene los datos de demostración (12 unidades en 2 torres, espacios comunes,
+mantenciones, trabajadores, documentos y presupuesto). Insértalo manualmente contra tu proyecto
+después de aplicar las migraciones — `db push` solo sincroniza el esquema, no datos.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cuentas de demostración
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Cuatro cuentas, una por rol, creadas en Supabase Auth y vinculadas vía
+`supabase/migrations/20261112000003_perfiles_demo.sql`:
 
-## Deploy on Vercel
+- `admin@demo.cl` — Administrador
+- `comite@demo.cl` — Comité de administración
+- `copropietario@demo.cl` — Copropietario (unidad B-202)
+- `conserje@demo.cl` — Conserje
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Las contraseñas no se guardan en el repositorio; se gestionan directamente en el dashboard de
+Supabase (Authentication → Users).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Estructura
+
+```
+src/app/(app)/<ruta>/page.tsx   — una página + sus server actions por caso de uso
+src/lib/permisos.ts             — qué rol puede abrir qué ruta
+src/lib/guard.ts                — redirige si el rol no tiene permiso
+supabase/migrations/            — esquema + reglas de negocio, en orden cronológico
+supabase/seed.sql               — datos de demostración
+ATRIBUCION.md                   — qué grupo propuso qué, y dónde quedó
+```

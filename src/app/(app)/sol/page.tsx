@@ -65,6 +65,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
             <Empty>No tienes deuda vigente.</Empty>
           ) : unidad.convenio_id ? (
             <Empty>Ya tienes un convenio vigente. Revisa “Mi unidad”.</Empty>
+          ) : propuestas && propuestas.length > 0 ? (
+            <Empty>Ya tienes una propuesta pendiente de aprobación del comité. Espera su decisión antes de enviar otra.</Empty>
           ) : (
             <form action={proponer} className="flex flex-col gap-4">
               <div className="text-[13px] text-ink-5">
