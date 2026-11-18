@@ -25,7 +25,7 @@ export const PERMISOS: Record<string, Rol[]> = {
   rend: ["administrador", "comite"],
   mul: ["administrador", "comite", "copropietario", "conserje"],
   esp: ["administrador", "comite", "copropietario", "conserje"],
-  mant: ["administrador", "comite", "conserje"],
+  mant: ["administrador", "comite", "copropietario", "conserje"],
   pers: ["administrador"],
   per: ["administrador"],
   config: ["administrador"],
