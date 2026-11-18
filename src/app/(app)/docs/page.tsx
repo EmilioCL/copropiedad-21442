@@ -3,34 +3,65 @@ import { redirect } from "next/navigation";
 import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Badge, Button, Card, Empty, Field, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
+import { Badge, Button, Card, Empty, Field, FormError, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
 import { fecha } from "@/lib/money";
 
 async function publicar(formData: FormData) {
   "use server";
   const perfil = await requireVista("docs");
+  const titulo = String(formData.get("titulo") ?? "").trim();
+  const tipo = String(formData.get("tipo") ?? "").trim();
+  const nota = String(formData.get("nota") ?? "").trim() || null;
+  const publico = formData.get("publico") === "on";
+  const archivo = formData.get("archivo") as File | null;
+
+  if (!titulo) redirect("/docs?error=" + encodeURIComponent("Indica un título."));
+  if (!archivo || archivo.size === 0) {
+    redirect("/docs?error=" + encodeURIComponent("Adjunta el archivo (PDF o Word) del documento."));
+  }
+
   const supabase = await createClient();
-  await supabase.from("documentos").insert({
-    condominio_id: perfil.condominioId,
-    titulo: String(formData.get("titulo") ?? "").trim(),
-    tipo: String(formData.get("tipo") ?? "").trim(),
-    nota: String(formData.get("nota") ?? "").trim() || null,
-    publico: formData.get("publico") === "on",
+  const nombreLimpio = archivo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `${perfil.condominioId}/${Date.now()}-${nombreLimpio}`;
+
+  const { error: errorSubida } = await supabase.storage.from("documentos").upload(path, archivo, {
+    contentType: archivo.type || undefined,
   });
+  if (errorSubida) redirect("/docs?error=" + encodeURIComponent("No se pudo subir el archivo."));
+
+  const { error } = await supabase.from("documentos").insert({
+    condominio_id: perfil.condominioId,
+    titulo,
+    tipo,
+    nota,
+    publico,
+    storage_path: path,
+  });
+  if (error) redirect("/docs?error=" + encodeURIComponent("No se pudo publicar el documento."));
+
   revalidatePath("/docs");
   redirect("/docs");
 }
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const perfil = await requireVista("docs");
+  const { error } = await searchParams;
   const supabase = await createClient();
   const esAdmin = perfil.rol === "administrador";
 
-  const { data: documentos } = await supabase
+  const { data: documentosBase } = await supabase
     .from("documentos")
-    .select("id, titulo, tipo, nota, publico, fecha")
+    .select("id, titulo, tipo, nota, publico, fecha, storage_path")
     .eq("condominio_id", perfil.condominioId)
     .order("fecha", { ascending: false });
+
+  const documentos = await Promise.all(
+    (documentosBase ?? []).map(async (d) => {
+      if (!d.storage_path) return { ...d, url: null as string | null };
+      const { data } = await supabase.storage.from("documentos").createSignedUrl(d.storage_path, 60 * 10);
+      return { ...d, url: data?.signedUrl ?? null };
+    }),
+  );
 
   return (
     <>
@@ -42,6 +73,8 @@ export default async function Page() {
         nombre={perfil.nombre}
       />
 
+      {error && <div className="mb-5"><FormError>{error}</FormError></div>}
+
       {!documentos || documentos.length === 0 ? (
         <Empty>No hay documentos publicados.</Empty>
       ) : (
@@ -52,6 +85,7 @@ export default async function Page() {
               <Th>Tipo</Th>
               <Th>Fecha</Th>
               <Th>Visibilidad</Th>
+              <Th></Th>
             </tr>
           </thead>
           <tbody>
@@ -65,6 +99,13 @@ export default async function Page() {
                 <Td>{fecha(d.fecha)}</Td>
                 <Td>
                   <Badge tone={d.publico ? "success" : "neutral"}>{d.publico ? "Público" : "Reservado"}</Badge>
+                </Td>
+                <Td>
+                  {d.url && (
+                    <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-text hover:underline">
+                      Ver / descargar
+                    </a>
+                  )}
                 </Td>
               </tr>
             ))}
@@ -90,10 +131,19 @@ export default async function Page() {
                   <option>Otro</option>
                 </Select>
               </Field>
+              <Field label="Archivo (PDF o Word)">
+                <Input
+                  type="file"
+                  name="archivo"
+                  accept=".pdf,.doc,.docx"
+                  required
+                  className="file:mr-3 file:rounded-control file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-[12px] file:font-semibold"
+                />
+              </Field>
               <Field label="Nota (opcional)">
                 <Textarea name="nota" rows={2} />
               </Field>
-              <label className="flex items-center gap-2 text-[12.5px] text-ink-4">
+              <label className="col-span-2 flex items-center gap-2 text-[12.5px] text-ink-4">
                 <input type="checkbox" name="publico" defaultChecked /> Visible para todos los roles
               </label>
               <div className="col-span-2">
