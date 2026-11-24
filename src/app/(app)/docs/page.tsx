@@ -4,6 +4,7 @@ import { requireVista } from "@/lib/guard";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Badge, Button, Card, Empty, Field, FormError, Input, Select, Table, Td, Textarea, Th } from "@/components/ui";
+import { ConfirmButton } from "@/components/confirm-button";
 import { fecha } from "@/lib/money";
 
 async function publicar(formData: FormData) {
@@ -38,6 +39,23 @@ async function publicar(formData: FormData) {
     storage_path: path,
   });
   if (error) redirect("/docs?error=" + encodeURIComponent("No se pudo publicar el documento."));
+
+  revalidatePath("/docs");
+  redirect("/docs");
+}
+
+async function eliminar(formData: FormData) {
+  "use server";
+  await requireVista("docs");
+  const id = String(formData.get("id"));
+  const storagePath = String(formData.get("storage_path") ?? "");
+
+  const supabase = await createClient();
+  if (storagePath) {
+    await supabase.storage.from("documentos").remove([storagePath]);
+  }
+  const { error } = await supabase.from("documentos").delete().eq("id", id);
+  if (error) redirect("/docs?error=" + encodeURIComponent("No se pudo eliminar el documento."));
 
   revalidatePath("/docs");
   redirect("/docs");
@@ -101,11 +119,25 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                   <Badge tone={d.publico ? "success" : "neutral"}>{d.publico ? "Público" : "Reservado"}</Badge>
                 </Td>
                 <Td>
-                  {d.url && (
-                    <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-text hover:underline">
-                      Ver / descargar
-                    </a>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {d.url && (
+                      <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-text hover:underline">
+                        Ver / descargar
+                      </a>
+                    )}
+                    {esAdmin && (
+                      <form action={eliminar}>
+                        <input type="hidden" name="id" value={d.id} />
+                        <input type="hidden" name="storage_path" value={d.storage_path ?? ""} />
+                        <ConfirmButton
+                          mensaje={`¿Seguro que quieres eliminar "${d.titulo}"? Esta acción no se puede deshacer.`}
+                          className="px-2.5 py-1 text-[11px]"
+                        >
+                          Eliminar
+                        </ConfirmButton>
+                      </form>
+                    )}
+                  </div>
                 </Td>
               </tr>
             ))}
