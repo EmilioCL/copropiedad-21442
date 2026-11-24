@@ -136,7 +136,6 @@ export function Sidebar({
             <SectionLabel>GESTIÓN FINANCIERA</SectionLabel>
             <NavLink item={{ href: "/gc", label: "Emitir gastos comunes", icon: <IconGastosComunes /> }} activo={pathname === "/gc"} />
             <NavLink item={{ href: "/rec", label: "Recaudación", icon: <IconRecaudacion /> }} activo={pathname === "/rec"} />
-            <NavLink item={{ href: "/per", label: "Personal", icon: <IconPersonalConserjeria /> }} activo={pathname === "/per"} />
             <NavLink item={{ href: "/config", label: "Parámetros del condominio", icon: <IconConfig /> }} activo={pathname === "/config"} />
           </>
         )}
@@ -165,7 +164,10 @@ export function Sidebar({
         <SectionLabel>OPERACIONES</SectionLabel>
         <NavLink item={{ href: "/mant", label: "Mantenciones", icon: <IconMantenciones /> }} activo={pathname === "/mant"} />
         {esAdmin && (
-          <NavLink item={{ href: "/pers", label: "Trabajadores", icon: <IconTrabajadores /> }} activo={pathname === "/pers"} />
+          <>
+            <NavLink item={{ href: "/pers", label: "Trabajadores", icon: <IconTrabajadores /> }} activo={pathname === "/pers"} />
+            <NavLink item={{ href: "/per", label: "Personal", icon: <IconPersonalConserjeria /> }} activo={pathname === "/per"} />
+          </>
         )}
         <NavLink item={{ href: "/docs", label: "Documentos", icon: <IconDocumentos /> }} activo={pathname === "/docs"} />
 
