@@ -1560,6 +1560,43 @@ export type Database = {
           },
         ]
       }
+      votacion_elegibles: {
+        Row: {
+          unidad_id: string
+          votacion_id: string
+        }
+        Insert: {
+          unidad_id: string
+          votacion_id: string
+        }
+        Update: {
+          unidad_id?: string
+          votacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votacion_elegibles_unidad_id_fkey"
+            columns: ["unidad_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votacion_elegibles_unidad_id_fkey"
+            columns: ["unidad_id"]
+            isOneToOne: false
+            referencedRelation: "v_unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votacion_elegibles_votacion_id_fkey"
+            columns: ["votacion_id"]
+            isOneToOne: false
+            referencedRelation: "votaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       votaciones: {
         Row: {
           abierta: boolean
@@ -1728,6 +1765,16 @@ export type Database = {
         Returns: string
       }
       convenios_revisar_vencidos: { Args: never; Returns: number }
+      crear_votacion: {
+        Args: {
+          c: string
+          p_cierre: string
+          p_descripcion: string
+          p_quorum: Database["public"]["Enums"]["quorum_t"]
+          p_titulo: string
+        }
+        Returns: string
+      }
       cursar_multa: {
         Args: {
           c: string
@@ -1739,7 +1786,12 @@ export type Database = {
         Returns: string
       }
       emitir_gastos: {
-        Args: { c: string; p_partidas: Json; p_periodo: string }
+        Args: {
+          c: string
+          p_partidas: Json
+          p_periodo: string
+          p_publico?: boolean
+        }
         Returns: string
       }
       emitir_voto: {
