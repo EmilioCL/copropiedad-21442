@@ -24,11 +24,14 @@ async function emitir(formData: FormData) {
     redirect("/gc?error=" + encodeURIComponent("Agrega al menos una partida de gasto."));
   }
 
+  const publico = formData.get("publico") === "on";
+
   const supabase = await createClient();
   const { error } = await supabase.rpc("emitir_gastos", {
     c: perfil.condominioId,
     p_periodo: `${periodo}-01`,
     p_partidas: partidas,
+    p_publico: publico,
   });
 
   if (error) {
@@ -58,7 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
     <>
       <PageHeader
         title="Emitir gastos comunes"
-        subtitle="Prorratea el gasto del período según los derechos de cada unidad. El 5% se abona automáticamente al fondo de reserva."
+        subtitle="Prorratea el gasto del período según los derechos de cada unidad. El 5% se abona automáticamente al fondo de reserva y el desglose se notifica automáticamente."
         nota="no se puede emitir dos veces el mismo período."
         rol={perfil.rol}
         nombre={perfil.nombre}
@@ -82,6 +85,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                 </div>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-[12.5px] text-ink-4">
+              <input type="checkbox" name="publico" defaultChecked /> Notificar el desglose a todos los copropietarios
+            </label>
             <Button type="submit">Emitir gastos comunes</Button>
           </form>
         </Card>
