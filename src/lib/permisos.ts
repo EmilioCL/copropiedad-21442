@@ -34,6 +34,7 @@ export const PERMISOS: Record<string, Rol[]> = {
   acc: ["administrador", "conserje"],
   enc: ["administrador", "copropietario", "conserje"],
   not: ["administrador", "comite", "copropietario", "conserje"],
+  soporte: ["administrador", "comite", "copropietario", "conserje"],
   bit: ["administrador", "comite"],
 };
 

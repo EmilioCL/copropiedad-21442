@@ -33,6 +33,7 @@ import {
   IconEspacios,
   IconBitacora,
   IconConfig,
+  IconReportar,
   IconCerrarSesion,
 } from "@/components/icons";
 import { NOMBRE_ROL } from "@/lib/permisos";
@@ -130,6 +131,7 @@ export function Sidebar({
 
         <SectionLabel>AVISOS</SectionLabel>
         <NavLink item={{ href: "/not", label: "Notificaciones", icon: <IconNotificaciones /> }} activo={pathname === "/not"} />
+        <NavLink item={{ href: "/soporte", label: "Reportar un error", icon: <IconReportar /> }} activo={pathname === "/soporte"} />
 
         {esAdmin && (
           <>

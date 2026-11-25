@@ -1253,6 +1253,56 @@ export type Database = {
           },
         ]
       }
+      reportes: {
+        Row: {
+          condominio_id: string
+          creado_en: string
+          creado_por: string | null
+          descripcion: string
+          id: string
+          pagina: string | null
+          respuesta: string | null
+          resuelto: boolean
+          resuelto_en: string | null
+          rol_creador: Database["public"]["Enums"]["rol_t"]
+          titulo: string
+        }
+        Insert: {
+          condominio_id: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion: string
+          id?: string
+          pagina?: string | null
+          respuesta?: string | null
+          resuelto?: boolean
+          resuelto_en?: string | null
+          rol_creador: Database["public"]["Enums"]["rol_t"]
+          titulo: string
+        }
+        Update: {
+          condominio_id?: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion?: string
+          id?: string
+          pagina?: string | null
+          respuesta?: string | null
+          resuelto?: boolean
+          resuelto_en?: string | null
+          rol_creador?: Database["public"]["Enums"]["rol_t"]
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reportes_condominio_id_fkey"
+            columns: ["condominio_id"]
+            isOneToOne: false
+            referencedRelation: "condominios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservas: {
         Row: {
           bloque: string
@@ -1765,6 +1815,15 @@ export type Database = {
         Returns: string
       }
       convenios_revisar_vencidos: { Args: never; Returns: number }
+      crear_reporte: {
+        Args: {
+          c: string
+          p_descripcion: string
+          p_pagina?: string
+          p_titulo: string
+        }
+        Returns: string
+      }
       crear_votacion: {
         Args: {
           c: string
@@ -1844,6 +1903,10 @@ export type Database = {
       registrar_pago: {
         Args: { c: string; p_medio: string; p_monto: number; u: string }
         Returns: string
+      }
+      reporte_resolver: {
+        Args: { p_id: string; p_respuesta?: string }
+        Returns: undefined
       }
       resumen_publico: {
         Args: { c?: string }

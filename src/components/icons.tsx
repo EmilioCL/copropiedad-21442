@@ -297,6 +297,15 @@ export function IconConfig(p: IconProps) {
   );
 }
 
+export function IconReportar(p: IconProps) {
+  return (
+    <svg {...base(p)}>
+      <path d="M5 3.5v13" />
+      <path d="M5 4h8.5l-1.6 3 1.6 3H5" />
+    </svg>
+  );
+}
+
 export function IconCerrarSesion(p: IconProps) {
   return (
     <svg {...base(p)}>
