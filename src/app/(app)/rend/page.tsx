@@ -53,7 +53,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
     <>
       <PageHeader
         title="Rendición de cuentas"
-        subtitle="Al cerrar el período el balance queda inmutable; la notificación de transparencia es opcional."
+        subtitle="Al cerrar el período el balance queda inmutable; la notificación de transparencia es opcional. El administrador puede descargar un comprobante privado, que nunca genera notificaciones."
         nota={esAdmin ? "solo tú cierras la rendición." : "observas y visas la rendición."}
         rol={perfil.rol}
         nombre={perfil.nombre}
@@ -73,6 +73,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
               <Th>Egresos</Th>
               <Th>Balance</Th>
               <Th>Transparencia</Th>
+              {esAdmin && <Th></Th>}
             </tr>
           </thead>
           <tbody>
@@ -86,6 +87,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
                 <Td>
                   <Badge tone={r.notificada ? "success" : "neutral"}>{r.notificada ? "Notificada" : "No notificada"}</Badge>
                 </Td>
+                {esAdmin && (
+                  <Td>
+                    <a href={`/api/rendicion/${r.id}`} className="text-[12px] font-semibold text-blue-text hover:underline">
+                      Descargar
+                    </a>
+                  </Td>
+                )}
               </tr>
             ))}
           </tbody>
